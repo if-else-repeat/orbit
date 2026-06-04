@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070B1A" />
+  <meta name="description" content="Orbit — A 3-minute focus ritual for students. Breathe. Float. Return stronger." />
+  <title>ORBIT — Focus Ritual</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Syncopate:wght@400;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════ LANDING SCREEN -->
+  <div id="screen-landing" class="screen active">
+    <div class="stars-bg" id="landing-stars"></div>
+    <div class="nebula-bg"></div>
+
+    <div class="landing-content">
+      <div class="orbit-logo-wrap">
+        <div class="orbit-logo-ring ring-outer"></div>
+        <div class="orbit-logo-ring ring-mid"></div>
+        <div class="orbit-logo-ring ring-inner"></div>
+        <div class="orbit-logo-star"></div>
+        <div class="orbit-logo-orb"></div>
+      </div>
+
+      <h1 class="title-orbit">ORBIT</h1>
+      <p class="title-sub">A three-minute focus ritual.</p>
+      <p class="title-tagline">Relax. Breathe. Return stronger.</p>
+
+      <button class="btn-primary" id="btn-begin">
+        <span class="btn-text">Begin Orbit</span>
+        <span class="btn-glow"></span>
+      </button>
+
+      <div class="landing-stats">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-sessions">0</span>
+          <span class="stat-label">Sessions</span>
+        </div>
+        <div class="stat-divider">·</div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-harmony">—</span>
+          <span class="stat-label">Best Rank</span>
+        </div>
+        <div class="stat-divider">·</div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-minutes">0</span>
+          <span class="stat-label">Minutes</span>
+        </div>
+      </div>
+
+      <div class="streak-display" id="streak-display" style="display:none">
+        <span class="streak-flame">✦</span>
+        <span class="streak-text" id="streak-text"></span>
+      </div>
+    </div>
+
+    <div class="landing-footer">
+      No accounts. No ads. No distractions.
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ TUTORIAL SCREEN -->
+  <div id="screen-tutorial" class="screen">
+    <div class="tutorial-content">
+      <p class="tutorial-eyebrow">Before you begin</p>
+      <h2 class="tutorial-title">Sync your breath.</h2>
+
+      <div class="breath-guide">
+        <div class="breath-ring-wrap">
+          <div class="breath-ring" id="breath-ring-anim"></div>
+          <div class="breath-ring-inner"></div>
+          <div class="breath-center-dot"></div>
+        </div>
+        <div class="breath-label-wrap">
+          <span class="breath-phase-label" id="breath-phase-label">Inhale</span>
+          <span class="breath-timer-label" id="breath-timer-label">4</span>
+        </div>
+      </div>
+
+      <div class="breath-steps">
+        <div class="breath-step">
+          <span class="step-dot inhale-dot"></span>
+          <div>
+            <span class="step-name">Inhale</span>
+            <span class="step-dur">4 seconds</span>
+          </div>
+        </div>
+        <div class="breath-step">
+          <span class="step-dot hold-dot"></span>
+          <div>
+            <span class="step-name">Hold</span>
+            <span class="step-dur">7 seconds</span>
+          </div>
+        </div>
+        <div class="breath-step">
+          <span class="step-dot exhale-dot"></span>
+          <div>
+            <span class="step-name">Exhale</span>
+            <span class="step-dur">8 seconds</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls-hint">
+        <div class="control-row">
+          <div class="control-icon">◉</div>
+          <div class="control-desc">Hold mouse / finger → <em>expand orbit</em></div>
+        </div>
+        <div class="control-row">
+          <div class="control-icon">○</div>
+          <div class="control-desc">Release → <em>contract orbit</em></div>
+        </div>
+        <div class="control-row">
+          <div class="control-icon">✦</div>
+          <div class="control-desc">Collect glowing fragments → <em>gain harmony</em></div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btn-start-game">
+        <span class="btn-text">Enter Orbit</span>
+        <span class="btn-glow"></span>
+      </button>
+
+      <button class="btn-ghost" id="btn-skip-tutorial">Skip tutorial</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ GAME SCREEN -->
+  <div id="screen-game" class="screen">
+    <canvas id="game-canvas"></canvas>
+
+    <div class="hud">
+      <div class="hud-left">
+        <div class="hud-timer" id="hud-timer">3:00</div>
+        <div class="hud-label">remaining</div>
+      </div>
+      <div class="hud-center">
+        <div class="breath-indicator" id="breath-indicator">
+          <div class="breath-ring-mini" id="breath-ring-mini"></div>
+          <span class="breath-phase-mini" id="breath-phase-mini">Inhale</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-harmony" id="hud-harmony">0</div>
+        <div class="hud-label">harmony</div>
+      </div>
+    </div>
+
+    <div class="insight-toast" id="insight-toast"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════ END SCREEN -->
+  <div id="screen-end" class="screen">
+    <div class="stars-bg" id="end-stars"></div>
+    <div class="nebula-bg"></div>
+
+    <div class="end-content">
+      <div class="end-rank-badge" id="end-rank-badge">
+        <div class="rank-ring"></div>
+        <span class="rank-icon" id="end-rank-icon">✦</span>
+      </div>
+
+      <p class="end-eyebrow">Session Complete</p>
+      <h2 class="end-rank-title" id="end-rank-title">Focused Navigator</h2>
+
+      <div class="end-stats-row">
+        <div class="end-stat">
+          <span class="end-stat-val" id="end-harmony-val">0</span>
+          <span class="end-stat-label">Harmony</span>
+        </div>
+        <div class="end-stat">
+          <span class="end-stat-val" id="end-frags-val">0</span>
+          <span class="end-stat-label">Fragments</span>
+        </div>
+        <div class="end-stat">
+          <span class="end-stat-val" id="end-breath-val">0%</span>
+          <span class="end-stat-label">Breath Sync</span>
+        </div>
+      </div>
+
+      <div class="reflection-card" id="reflection-card">
+        <div class="reflection-type" id="reflection-type">Today's Reflection</div>
+        <div class="reflection-text" id="reflection-text"></div>
+        <div class="reflection-author" id="reflection-author"></div>
+      </div>
+
+      <div class="achievement-pop" id="achievement-pop" style="display:none">
+        <span class="ach-icon">✦</span>
+        <span class="ach-text" id="ach-text"></span>
+      </div>
+
+      <div class="end-actions">
+        <button class="btn-primary" id="btn-focus-session">
+          <span class="btn-text">Start Focus Session</span>
+          <span class="btn-glow"></span>
+        </button>
+        <button class="btn-ghost" id="btn-one-more">One more orbit</button>
+      </div>
+
+      <div class="end-tip">
+        <em id="end-tip-text"></em>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/content.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/breathing.js"></script>
+  <script src="js/orbit.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
