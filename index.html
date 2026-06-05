@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#070B1A" />
+  <meta name="description" content="Orbit — Focus ritual + Pomodoro timer for students." />
+  <title>ORBIT — Focus Ritual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Syncopate:wght@400;700&family=Space+Mono:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ══════════════════════ LANDING -->
+<div id="screen-landing" class="screen active">
+  <div class="stars-bg" id="landing-stars"></div>
+  <div class="nebula-bg"></div>
+  <div class="landing-content">
+    <div class="orbit-logo-wrap">
+      <div class="orbit-logo-ring ring-outer"></div>
+      <div class="orbit-logo-ring ring-mid"></div>
+      <div class="orbit-logo-ring ring-inner"></div>
+      <div class="orbit-logo-star"></div>
+      <div class="orbit-logo-orb"></div>
+    </div>
+    <h1 class="title-orbit">ORBIT</h1>
+    <p class="title-sub">A focus ritual for serious students.</p>
+    <p class="title-tagline">Study. Breathe. Return stronger.</p>
+    <div class="landing-actions">
+      <button class="btn-primary" id="btn-pomodoro">
+        <span class="btn-icon">◎</span>
+        <span class="btn-text">Start Study Session</span>
+        <span class="btn-glow"></span>
+      </button>
+      <button class="btn-secondary" id="btn-orbit-only">
+        <span class="btn-text">Just Orbit (3 min break)</span>
+        <span class="btn-glow"></span>
+      </button>
+    </div>
+    <div class="landing-stats">
+      <div class="stat-item">
+        <span class="stat-value" id="stat-today">0m</span>
+        <span class="stat-label">Today</span>
+      </div>
+      <div class="stat-divider">·</div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-sessions">0</span>
+        <span class="stat-label">Sessions</span>
+      </div>
+      <div class="stat-divider">·</div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-streak">0</span>
+        <span class="stat-label">Day Streak</span>
+      </div>
+      <div class="stat-divider">·</div>
+      <div class="stat-item">
+        <span class="stat-value" id="stat-rank">—</span>
+        <span class="stat-label">Best Rank</span>
+      </div>
+    </div>
+    <button class="btn-ghost stats-link" id="btn-view-stats">View full stats &amp; achievements →</button>
+  </div>
+  <div class="landing-footer">No accounts · No ads · Works offline</div>
+</div>
+
+<!-- ══════════════════════ POMODORO SETUP -->
+<div id="screen-pomo-setup" class="screen">
+  <div class="setup-content">
+    <p class="tutorial-eyebrow">Configure your session</p>
+    <h2 class="tutorial-title">How long will you study?</h2>
+    <div class="time-picker-wrap">
+      <div class="time-picker-group">
+        <label class="picker-label">Study</label>
+        <div class="picker-row">
+          <button class="picker-btn" data-target="study" data-dir="-1">−</button>
+          <span class="picker-val" id="study-val">25</span>
+          <span class="picker-unit">min</span>
+          <button class="picker-btn" data-target="study" data-dir="1">+</button>
+        </div>
+      </div>
+      <div class="picker-sep">then</div>
+      <div class="time-picker-group">
+        <label class="picker-label">Break</label>
+        <div class="picker-row">
+          <button class="picker-btn" data-target="break" data-dir="-1">−</button>
+          <span class="picker-val" id="break-val">5</span>
+          <span class="picker-unit">min</span>
+          <button class="picker-btn" data-target="break" data-dir="1">+</button>
+        </div>
+      </div>
+    </div>
+    <div class="preset-row">
+      <button class="preset-btn active" data-study="25" data-break="5">25 / 5</button>
+      <button class="preset-btn" data-study="45" data-break="10">45 / 10</button>
+      <button class="preset-btn" data-study="50" data-break="10">50 / 10</button>
+      <button class="preset-btn" data-study="90" data-break="20">90 / 20</button>
+    </div>
+    <div class="task-input-wrap">
+      <label class="picker-label">What are you studying? <span class="optional">(optional)</span></label>
+      <input type="text" id="task-input" class="task-input" placeholder="e.g. Physics Chapter 4 — Thermodynamics" maxlength="60" />
+    </div>
+    <button class="btn-primary" id="btn-begin-study">
+      <span class="btn-text">Begin Session</span>
+      <span class="btn-glow"></span>
+    </button>
+    <button class="btn-ghost" id="btn-setup-back">← Back</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ STUDY TIMER -->
+<div id="screen-study" class="screen">
+  <div class="study-bg-pulse" id="study-bg-pulse"></div>
+  <div class="study-content">
+    <div class="study-task-label" id="study-task-label"></div>
+    <div class="study-timer-wrap">
+      <div class="study-timer" id="study-timer">25:00</div>
+      <div class="study-timer-label">remaining</div>
+    </div>
+    <div class="study-session-badge" id="study-session-badge">Session 1</div>
+    <div class="study-breathe-hint">
+      <div class="breathe-dot"></div>
+      <span>Breathe slowly. One task at a time.</span>
+    </div>
+    <div class="study-total-today">
+      <span id="study-total-display">0 min studied today</span>
+    </div>
+  </div>
+  <button class="btn-study-end" id="btn-end-study">End session early</button>
+</div>
+
+<!-- ══════════════════════ BREAK PROMPT -->
+<div id="screen-break-prompt" class="screen">
+  <div class="stars-bg" id="break-stars"></div>
+  <div class="nebula-bg"></div>
+  <div class="break-prompt-content">
+    <div class="break-check">✓</div>
+    <h2 class="break-title" id="break-title">Session complete.</h2>
+    <p class="break-studied" id="break-studied">You studied for 25 minutes.</p>
+    <p class="break-total" id="break-total">Total today: 25 min</p>
+    <div class="break-actions">
+      <button class="btn-primary" id="btn-take-break">
+        <span class="btn-icon">◌</span>
+        <span class="btn-text">Take an Orbit break</span>
+        <span class="btn-glow"></span>
+      </button>
+      <button class="btn-secondary" id="btn-keep-studying">
+        <span class="btn-text">Keep studying →</span>
+        <span class="btn-glow"></span>
+      </button>
+    </div>
+    <p class="break-tip" id="break-tip-text"></p>
+  </div>
+</div>
+
+<!-- ══════════════════════ TUTORIAL -->
+<div id="screen-tutorial" class="screen">
+  <div class="tutorial-content">
+    <p class="tutorial-eyebrow">Before you orbit</p>
+    <h2 class="tutorial-title">Sync your breath.</h2>
+    <div class="breath-guide">
+      <div class="breath-ring-wrap">
+        <div class="breath-ring" id="breath-ring-anim"></div>
+        <div class="breath-ring-inner"></div>
+        <div class="breath-center-dot"></div>
+      </div>
+      <div class="breath-label-wrap">
+        <span class="breath-phase-label" id="breath-phase-label">Inhale</span>
+        <span class="breath-timer-label" id="breath-timer-label">4</span>
+      </div>
+    </div>
+    <div class="controls-hint">
+      <div class="control-row">
+        <div class="control-icon">◉</div>
+        <div class="control-desc">Hold → <em>expand orbit outward</em></div>
+      </div>
+      <div class="control-row">
+        <div class="control-icon">○</div>
+        <div class="control-desc">Release → <em>drift back inward</em></div>
+      </div>
+      <div class="control-row">
+        <div class="control-icon">⬡</div>
+        <div class="control-desc">Stay in the <em>gold ring</em> → harmony builds</div>
+      </div>
+      <div class="control-row">
+        <div class="control-icon">✦</div>
+        <div class="control-desc">Collect fragments during <em>breath pulses</em></div>
+      </div>
+      <div class="control-row">
+        <div class="control-icon">◈</div>
+        <div class="control-desc">Avoid <em>void zones</em> — dark drifting patches</div>
+      </div>
+    </div>
+    <button class="btn-primary" id="btn-start-game">
+      <span class="btn-text">Enter Orbit</span>
+      <span class="btn-glow"></span>
+    </button>
+    <button class="btn-ghost" id="btn-skip-tutorial">Skip</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ GAME -->
+<div id="screen-game" class="screen">
+  <canvas id="game-canvas"></canvas>
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-timer" id="hud-timer">3:00</div>
+      <div class="hud-label">remaining</div>
+    </div>
+    <div class="hud-center">
+      <div class="breath-indicator">
+        <div class="breath-ring-mini" id="breath-ring-mini"></div>
+        <span class="breath-phase-mini" id="breath-phase-mini">Inhale</span>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-harmony" id="hud-harmony">0</div>
+      <div class="hud-label">harmony</div>
+    </div>
+  </div>
+  <div class="sweet-spot-hint" id="sweet-spot-hint">Stay in the gold ring</div>
+  <div class="insight-toast" id="insight-toast"></div>
+  <div class="pulse-wave-text" id="pulse-wave-text">✦ Pulse!</div>
+</div>
+
+<!-- ══════════════════════ END / REFLECTION -->
+<div id="screen-end" class="screen">
+  <div class="stars-bg" id="end-stars"></div>
+  <div class="nebula-bg"></div>
+  <div class="end-content">
+    <div class="end-rank-badge" id="end-rank-badge">
+      <div class="rank-ring"></div>
+      <span class="rank-icon" id="end-rank-icon">✦</span>
+    </div>
+    <p class="end-eyebrow">Orbit Complete</p>
+    <h2 class="end-rank-title" id="end-rank-title">Focused Navigator</h2>
+    <div class="end-stats-row">
+      <div class="end-stat">
+        <span class="end-stat-val" id="end-harmony-val">0</span>
+        <span class="end-stat-label">Harmony</span>
+      </div>
+      <div class="end-stat">
+        <span class="end-stat-val" id="end-frags-val">0</span>
+        <span class="end-stat-label">Fragments</span>
+      </div>
+      <div class="end-stat">
+        <span class="end-stat-val" id="end-breath-val">0%</span>
+        <span class="end-stat-label">Breath Sync</span>
+      </div>
+    </div>
+    <div class="reflection-card" id="reflection-card">
+      <div class="reflection-type" id="reflection-type">Today's Reflection</div>
+      <div class="reflection-text" id="reflection-text"></div>
+      <div class="reflection-author" id="reflection-author"></div>
+    </div>
+    <div class="achievement-pop" id="achievement-pop" style="display:none">
+      <span class="ach-icon">✦</span>
+      <span class="ach-text" id="ach-text"></span>
+    </div>
+    <div class="end-actions">
+      <button class="btn-primary" id="btn-focus-session">
+        <span class="btn-text">Back to Study Timer</span>
+        <span class="btn-glow"></span>
+      </button>
+      <button class="btn-secondary" id="btn-one-more">One more orbit</button>
+    </div>
+    <button class="btn-ghost" id="btn-save-card">⬇ Save achievement card</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ STATS -->
+<div id="screen-stats" class="screen">
+  <div class="stars-bg" id="stats-stars"></div>
+  <div class="nebula-bg"></div>
+  <div class="stats-content">
+    <h2 class="stats-title">Your Journey</h2>
+    <div class="stats-grid">
+      <div class="stats-card">
+        <span class="stats-card-val" id="s-today">0</span>
+        <span class="stats-card-label">Minutes today</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-val" id="s-week">0</span>
+        <span class="stats-card-label">Minutes this week</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-val" id="s-total">0</span>
+        <span class="stats-card-label">Total minutes</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-val" id="s-sessions">0</span>
+        <span class="stats-card-label">Study sessions</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-val" id="s-orbits">0</span>
+        <span class="stats-card-label">Orbits taken</span>
+      </div>
+      <div class="stats-card">
+        <span class="stats-card-val" id="s-streak">0</span>
+        <span class="stats-card-label">Day streak</span>
+      </div>
+    </div>
+    <div class="achievements-section">
+      <h3 class="ach-section-title">Achievements</h3>
+      <div class="ach-grid" id="ach-grid"></div>
+    </div>
+    <div class="export-section">
+      <h3 class="ach-section-title">Save Your Progress</h3>
+      <div class="export-style-row">
+        <button class="export-style-btn active" data-style="minimal">Minimal</button>
+        <button class="export-style-btn" data-style="poster">Space Poster</button>
+        <button class="export-style-btn" data-style="square">Square</button>
+      </div>
+      <canvas id="export-canvas" style="display:none"></canvas>
+      <div class="export-preview" id="export-preview"></div>
+      <button class="btn-primary" id="btn-download-card">
+        <span class="btn-text">⬇ Download Image</span>
+        <span class="btn-glow"></span>
+      </button>
+    </div>
+    <button class="btn-ghost" id="btn-stats-back">← Back to home</button>
+  </div>
+</div>
+
+<script src="js/content.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/particles.js"></script>
+<script src="js/breathing.js"></script>
+<script src="js/orbit.js"></script>
+<script src="js/export.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/pomodoro.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
