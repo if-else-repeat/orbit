@@ -1,11 +1,10 @@
 // ════════════════════════════════════════════════════════════
-//  ORBIT — UI Module
-//  Screen management, landing stats, tutorial, end screen
+//  ORBIT v2 — UI Module
 // ════════════════════════════════════════════════════════════
 
 const UI = (() => {
 
-  // ── Screen transitions ─────────────────────────────────────
+  // ── Screen transitions ──────────────────────────────────────
 
   function show(id, cb) {
     const el = document.getElementById(id);
@@ -20,69 +19,57 @@ const UI = (() => {
     if (!el) return;
     el.classList.add('fade-out');
     el.classList.remove('active');
-    if (cb) setTimeout(cb, 600);
+    if (cb) setTimeout(cb, 500);
   }
 
   function transition(fromId, toId, cb) {
-    hide(fromId, () => {
-      show(toId, cb);
-    });
+    hide(fromId, () => show(toId, cb));
   }
 
-  // ── Landing Screen ─────────────────────────────────────────
+  // ── Landing ─────────────────────────────────────────────────
 
   function initLanding() {
     generateStarField('landing-stars', 80);
-
-    const data = Storage.get();
-    document.getElementById('stat-sessions').textContent = data.sessionsPlayed;
-    document.getElementById('stat-minutes').textContent  = data.totalMinutes;
-    document.getElementById('stat-harmony').textContent  = data.bestRank || '—';
-
-    const streakEl = document.getElementById('streak-display');
-    const streakTx = document.getElementById('streak-text');
-    if (data.streakDays >= 2) {
-      streakEl.style.display = 'flex';
-      streakTx.textContent   = `${data.streakDays}-day streak`;
-    }
+    refreshLanding();
   }
 
   function refreshLanding() {
-    const data = Storage.get();
-    document.getElementById('stat-sessions').textContent = data.sessionsPlayed;
-    document.getElementById('stat-minutes').textContent  = data.totalMinutes;
-    document.getElementById('stat-harmony').textContent  = data.bestRank || '—';
+    const d = Storage.get();
+    const today = d.todayStudyMins || 0;
+    setText('stat-today',    today >= 60
+      ? Math.floor(today/60) + 'h ' + (today%60) + 'm'
+      : today + 'm');
+    setText('stat-sessions', d.studySessions || 0);
+    setText('stat-streak',   d.streakDays    || 0);
+    setText('stat-rank',     d.bestRank      || '—');
   }
 
-  // ── Star Field Generator (HTML) ────────────────────────────
+  // ── Star Field ──────────────────────────────────────────────
 
   function generateStarField(containerId, count) {
     const el = document.getElementById(containerId);
     if (!el) return;
     el.innerHTML = '';
     for (let i = 0; i < count; i++) {
-      const star = document.createElement('div');
+      const star  = document.createElement('div');
       star.className = 'star-dot';
-      const size  = Math.random() * 2 + 0.5;
-      const minOp = (Math.random() * 0.2 + 0.05).toFixed(2);
-      const maxOp = (parseFloat(minOp) + Math.random() * 0.4 + 0.1).toFixed(2);
+      const size  = Math.random() * 1.8 + 0.4;
+      const minOp = (Math.random() * 0.15 + 0.04).toFixed(2);
+      const maxOp = (parseFloat(minOp) + Math.random() * 0.35 + 0.08).toFixed(2);
       const dur   = (Math.random() * 3 + 2).toFixed(1);
       star.style.cssText = `
-        left:${Math.random() * 100}%;
-        top:${Math.random() * 100}%;
+        left:${Math.random()*100}%; top:${Math.random()*100}%;
         width:${size}px; height:${size}px;
-        --min-op:${minOp}; --max-op:${maxOp};
-        --dur:${dur}s;
-        animation-delay:${(Math.random() * dur).toFixed(1)}s;
+        --min-op:${minOp}; --max-op:${maxOp}; --dur:${dur}s;
+        animation-delay:${(Math.random()*parseFloat(dur)).toFixed(1)}s;
       `;
       el.appendChild(star);
     }
   }
 
-  // ── Tutorial ───────────────────────────────────────────────
+  // ── Tutorial ─────────────────────────────────────────────────
 
-  let tutRaf   = null;
-  let tutStart = null;
+  let tutRaf = null;
 
   function startTutorialAnim() {
     const ring  = document.getElementById('breath-ring-anim');
@@ -90,9 +77,9 @@ const UI = (() => {
     const timer = document.getElementById('breath-timer-label');
 
     const PHASES = [
-      { name: 'Inhale',  dur: 4,  cls: 'inhale',  color: '#B794F4' },
-      { name: 'Hold',    dur: 7,  cls: 'hold',    color: '#6EE7FF' },
-      { name: 'Exhale',  dur: 8,  cls: 'exhale',  color: '#8AFFC1' },
+      { name:'Inhale', cls:'inhale', color:'#B794F4', dur:4 },
+      { name:'Hold',   cls:'hold',   color:'#6EE7FF', dur:7 },
+      { name:'Exhale', cls:'exhale', color:'#8AFFC1', dur:8 },
     ];
 
     Breathing.startTutorial({
@@ -109,15 +96,10 @@ const UI = (() => {
     let lastT = null;
     function step(ts) {
       if (!lastT) lastT = ts;
-      const dt = (ts - lastT) / 1000;
-      lastT = ts;
-
+      const dt = (ts - lastT) / 1000; lastT = ts;
       const info = Breathing.tickTutorial(dt);
       timer.textContent = info.remaining;
-
-      // CSS transition handles ring scale (set via class)
-      ring.className = 'breath-ring ' + info.phase;
-
+      ring.className    = 'breath-ring ' + info.phase;
       tutRaf = requestAnimationFrame(step);
     }
     tutRaf = requestAnimationFrame(step);
@@ -127,135 +109,160 @@ const UI = (() => {
     if (tutRaf) { cancelAnimationFrame(tutRaf); tutRaf = null; }
   }
 
-  // ── HUD Updates ────────────────────────────────────────────
+  // ── HUD ──────────────────────────────────────────────────────
 
   function updateTimer(seconds) {
-    const m = Math.floor(seconds / 60);
-    const s = Math.floor(seconds % 60);
-    const el = document.getElementById('hud-timer');
-    if (el) el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    const m  = Math.floor(seconds / 60);
+    const s  = Math.floor(seconds % 60);
+    setText('hud-timer', `${m}:${s.toString().padStart(2,'0')}`);
   }
 
   function updateHarmony(val) {
     const el = document.getElementById('hud-harmony');
-    if (el) {
-      el.textContent = val;
-      el.style.transform = 'scale(1.3)';
-      setTimeout(() => { el.style.transform = 'scale(1)'; }, 200);
-    }
+    if (!el) return;
+    el.textContent = val;
+    el.style.transform = 'scale(1.3)';
+    setTimeout(() => { el.style.transform = 'scale(1)'; }, 180);
   }
 
   function updateBreathHUD(phase) {
     const ring  = document.getElementById('breath-ring-mini');
     const label = document.getElementById('breath-phase-mini');
     if (!ring || !label) return;
-
-    const phaseMap = {
-      inhale: { cls: 'inhale', text: 'Inhale' },
-      hold:   { cls: 'hold',   text: 'Hold'   },
-      exhale: { cls: 'exhale', text: 'Exhale' },
-    };
-    const info = phaseMap[phase];
-    if (info) {
-      ring.className  = 'breath-ring-mini ' + info.cls;
-      label.textContent = info.text;
-    }
+    const map = { inhale:'Inhale', hold:'Hold', exhale:'Exhale' };
+    ring.className   = 'breath-ring-mini ' + phase;
+    label.textContent = map[phase] || phase;
   }
 
-  // ── Insight Toast ──────────────────────────────────────────
+  // ── Insight Toast ────────────────────────────────────────────
 
   let toastTimer = null;
 
   function showInsight(text) {
     const el = document.getElementById('insight-toast');
     if (!el) return;
-
     if (toastTimer) { clearTimeout(toastTimer); el.classList.remove('show'); }
-
     setTimeout(() => {
       el.textContent = text;
       el.classList.add('show');
-      toastTimer = setTimeout(() => {
-        el.classList.remove('show');
-        toastTimer = null;
-      }, 2800);
+      toastTimer = setTimeout(() => { el.classList.remove('show'); toastTimer = null; }, 2600);
     }, 50);
   }
 
-  // ── End Screen ─────────────────────────────────────────────
+  // ── Pulse Wave Flash ─────────────────────────────────────────
+
+  let pulseTextTimer = null;
+
+  function showPulseWave() {
+    const el = document.getElementById('pulse-wave-text');
+    if (!el) return;
+    el.classList.remove('show');
+    void el.offsetWidth;
+    el.classList.add('show');
+    if (pulseTextTimer) clearTimeout(pulseTextTimer);
+    pulseTextTimer = setTimeout(() => el.classList.remove('show'), 1300);
+  }
+
+  // ── End Screen ───────────────────────────────────────────────
 
   const RANKS = [
-    { min: 0,   name: 'Drifting Wanderer', icon: '◌',  color: '#4A6080' },
-    { min: 30,  name: 'Gentle Explorer',   icon: '○',  color: '#8AFFC1' },
-    { min: 80,  name: 'Focused Navigator', icon: '◎',  color: '#6EE7FF' },
-    { min: 150, name: 'Orbital Master',    icon: '✦',  color: '#B794F4' },
-    { min: 250, name: 'Cosmic Scholar',    icon: '✧',  color: '#FFD166' },
+    { min:0,   name:'Drifting Wanderer', icon:'◌', color:'#4A6080' },
+    { min:30,  name:'Gentle Explorer',   icon:'○', color:'#8AFFC1' },
+    { min:80,  name:'Focused Navigator', icon:'◎', color:'#6EE7FF' },
+    { min:160, name:'Orbital Master',    icon:'✦', color:'#B794F4' },
+    { min:280, name:'Cosmic Scholar',    icon:'✧', color:'#FFD166' },
   ];
 
   function getRank(harmony) {
     let rank = RANKS[0];
-    for (const r of RANKS) {
-      if (harmony >= r.min) rank = r;
-    }
+    for (const r of RANKS) if (harmony >= r.min) rank = r;
     return rank;
   }
 
   function showEndScreen(stats) {
     generateStarField('end-stars', 60);
-
     const rank = getRank(stats.harmony);
 
-    // Badge
-    document.getElementById('end-rank-icon').textContent  = rank.icon;
-    document.getElementById('end-rank-title').textContent = rank.name;
-    document.getElementById('end-rank-title').style.color = rank.color;
+    setText('end-rank-icon',  rank.icon);
+    setText('end-rank-title', rank.name);
+    setStyle('end-rank-title', 'color', rank.color);
 
-    // Stats
-    document.getElementById('end-harmony-val').textContent = stats.harmony;
-    document.getElementById('end-frags-val').textContent   = stats.collected;
-    document.getElementById('end-breath-val').textContent  = stats.breathSync + '%';
+    setText('end-harmony-val', stats.harmony);
+    setText('end-frags-val',   stats.collected);
+    setText('end-breath-val',  stats.breathSync + '%');
 
-    // Reflection card
-    const card = CONTENT.getEndingCard();
-    document.getElementById('reflection-type').textContent = card.label;
-    document.getElementById('reflection-text').textContent = card.text;
-    document.getElementById('reflection-author').textContent = card.author;
+    const card   = CONTENT.getEndingCard();
+    setText('reflection-type',   card.label);
+    setText('reflection-text',   card.text);
+    setText('reflection-author', card.author);
 
-    // Animate card
+    // Re-trigger card animation
     const cardEl = document.getElementById('reflection-card');
-    cardEl.style.animation = 'none';
-    cardEl.offsetHeight; // reflow
-    cardEl.style.animation = '';
-
-    // End tip
-    document.getElementById('end-tip-text').textContent = CONTENT.getEndTip();
+    if (cardEl) { cardEl.style.animation='none'; void cardEl.offsetHeight; cardEl.style.animation=''; }
 
     // Achievements
     const earned = Storage.checkAchievements({ rank: rank.name, breathSync: stats.breathSync });
-    if (earned.length) {
-      const achEl = document.getElementById('achievement-pop');
-      const achTx = document.getElementById('ach-text');
+    const achEl  = document.getElementById('achievement-pop');
+    const achTx  = document.getElementById('ach-text');
+    if (earned.length && achEl && achTx) {
       achEl.style.display = 'flex';
-      achTx.textContent   = 'Achievement: ' + earned[0];
+      achTx.textContent   = 'Unlocked: ' + earned[0];
       setTimeout(() => { achEl.style.display = 'none'; }, 5000);
+    } else if (achEl) {
+      achEl.style.display = 'none';
     }
 
     return rank.name;
   }
 
+  // ── Study screen ─────────────────────────────────────────────
+
+  function updateStudyTimer(secondsLeft, studyMins) {
+    const m  = Math.floor(secondsLeft / 60);
+    const s  = secondsLeft % 60;
+    const el = document.getElementById('study-timer');
+    if (!el) return;
+    el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    el.className   = 'study-timer' + (secondsLeft <= 60 ? ' last-min' : '');
+  }
+
+  function updateStudyTotal() {
+    const mins = Storage.getTodayMins();
+    const el   = document.getElementById('study-total-display');
+    if (el) el.textContent = mins + ' min studied today';
+  }
+
+  // ── Break prompt ─────────────────────────────────────────────
+
+  function showBreakPrompt(info) {
+    generateStarField('break-stars', 60);
+    setText('break-title',   info.early ? 'Session ended.' : 'Session complete.');
+    setText('break-studied', `You studied for ${info.studyMins} minutes.`);
+    const total = Storage.get().todayStudyMins || 0;
+    setText('break-total', `Total today: ${total} min`);
+    setText('break-tip-text', CONTENT.getEndTip());
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────
+
+  function setText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function setStyle(id, prop, val) {
+    const el = document.getElementById(id);
+    if (el) el.style[prop] = val;
+  }
+
   return {
-    show,
-    hide,
-    transition,
-    initLanding,
-    refreshLanding,
-    startTutorialAnim,
-    stopTutorialAnim,
-    updateTimer,
-    updateHarmony,
-    updateBreathHUD,
-    showInsight,
-    showEndScreen,
-    getRank,
+    show, hide, transition,
+    initLanding, refreshLanding, generateStarField,
+    startTutorialAnim, stopTutorialAnim,
+    updateTimer, updateHarmony, updateBreathHUD,
+    showInsight, showPulseWave,
+    showEndScreen, getRank,
+    updateStudyTimer, updateStudyTotal,
+    showBreakPrompt,
   };
 })();

@@ -1,113 +1,165 @@
 // ════════════════════════════════════════════════════════════
-//  ORBIT — Storage Module
-//  Manages all localStorage persistence
+//  ORBIT v2 — Storage (upgraded)
+//  Tracks study time · orbit sessions · streaks · achievements
 // ════════════════════════════════════════════════════════════
 
 const Storage = (() => {
 
-  const KEY = 'orbit_v1';
+  const KEY = 'orbit_v2';
 
   const DEFAULTS = {
-    sessionsPlayed:   0,
-    totalMinutes:     0,
+    // Study
+    studySessions:    0,
+    totalStudyMins:   0,
+    todayStudyMins:   0,
+    weekStudyMins:    0,
+    lastStudyDate:    null,
+
+    // Orbit
+    orbitSessions:    0,
+    totalOrbitMins:   0,
     bestHarmony:      0,
     bestRank:         null,
-    lastPlayed:       null,
-    streakDays:       0,
-    achievements:     [],
     allTimeFragments: 0,
-    allTimeBreathSync: 0,
+
+    // Streak
+    streakDays:       0,
+    lastActiveDate:   null,
+
+    // Achievements
+    achievements:     [],
+
+    // Meta
+    schemaVersion:    2,
   };
 
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
       if (!raw) return { ...DEFAULTS };
-      return { ...DEFAULTS, ...JSON.parse(raw) };
-    } catch {
-      return { ...DEFAULTS };
-    }
+      const parsed = JSON.parse(raw);
+      // Migrate from v1 if needed
+      if (!parsed.schemaVersion || parsed.schemaVersion < 2) {
+        return { ...DEFAULTS, streakDays: parsed.streakDays || 0 };
+      }
+      return { ...DEFAULTS, ...parsed };
+    } catch { return { ...DEFAULTS }; }
   }
 
   function save(data) {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch (e) {
-      console.warn('Orbit: could not save to localStorage', e);
+    try { localStorage.setItem(KEY, JSON.stringify(data)); }
+    catch(e) { console.warn('Orbit: localStorage save failed', e); }
+  }
+
+  function get() { return load(); }
+
+  // ── Study session recording ──────────────────────────────────
+
+  function recordStudy(minutes) {
+    const data    = load();
+    const today   = new Date().toDateString();
+    const lastDay = data.lastStudyDate;
+
+    data.studySessions    += 1;
+    data.totalStudyMins   += minutes;
+
+    // Today reset
+    if (lastDay !== today) {
+      data.todayStudyMins = 0;
     }
+    data.todayStudyMins += minutes;
+    data.lastStudyDate   = today;
+
+    // Week (simple: last 7 days rolling — stored as daily log)
+    data.weekStudyMins = (data.weekStudyMins || 0) + minutes;
+
+    updateStreak(data, today);
+    save(data);
+    return data;
   }
 
-  function get() {
-    return load();
-  }
+  // ── Orbit session recording ──────────────────────────────────
 
-  function recordSession({ harmony, rank, fragments, breathSync }) {
-    const data = load();
-    data.sessionsPlayed += 1;
-    data.totalMinutes  += 3;
-    data.allTimeFragments += fragments;
-    data.allTimeBreathSync = Math.round(
-      ((data.allTimeBreathSync * (data.sessionsPlayed - 1)) + breathSync) / data.sessionsPlayed
-    );
+  function recordOrbit({ harmony, rank, fragments, breathSync }) {
+    const data  = load();
+    const today = new Date().toDateString();
+
+    data.orbitSessions    += 1;
+    data.totalOrbitMins   += 3;
+    data.allTimeFragments  = (data.allTimeFragments || 0) + fragments;
 
     if (harmony > data.bestHarmony) {
       data.bestHarmony = harmony;
       data.bestRank    = rank;
     }
 
-    // Streak logic
-    const today    = new Date().toDateString();
-    const lastDate = data.lastPlayed;
-    if (lastDate) {
-      const last     = new Date(lastDate);
-      const todayD   = new Date(today);
-      const diff     = (todayD - last) / (1000 * 60 * 60 * 24);
-      if (diff === 1) {
-        data.streakDays += 1;
-      } else if (diff > 1) {
-        data.streakDays = 1;
-      }
-      // same day: keep streak
-    } else {
-      data.streakDays = 1;
-    }
-    data.lastPlayed = today;
-
+    updateStreak(data, today);
     save(data);
     return data;
   }
 
-  // ── Achievements ───────────────────────────────────────────
+  function updateStreak(data, today) {
+    const last = data.lastActiveDate;
+    if (last) {
+      const diff = (new Date(today) - new Date(last)) / (1000 * 60 * 60 * 24);
+      if (diff === 1)      data.streakDays += 1;
+      else if (diff > 1)   data.streakDays  = 1;
+      // same day: keep streak unchanged
+    } else {
+      data.streakDays = 1;
+    }
+    data.lastActiveDate = today;
+  }
 
-  const ACHIEVEMENTS = [
-    { id: 'first_orbit',       label: 'First Orbit',         condition: d => d.sessionsPlayed >= 1 },
-    { id: 'five_sessions',     label: 'Five Orbits',         condition: d => d.sessionsPlayed >= 5 },
-    { id: 'ten_sessions',      label: 'Ten Orbits',          condition: d => d.sessionsPlayed >= 10 },
-    { id: 'twenty_five',       label: '25 Sessions',         condition: d => d.sessionsPlayed >= 25 },
-    { id: 'hundred_fragments', label: '100 Fragments',       condition: d => d.allTimeFragments >= 100 },
-    { id: 'perfect_breath',    label: 'Perfect Breath',      condition: (d, s) => s && s.breathSync >= 90 },
-    { id: 'orbital_master',    label: 'Orbital Master',      condition: (d, s) => s && s.rank === 'Orbital Master' },
-    { id: 'cosmic_scholar',    label: 'Cosmic Scholar',      condition: (d, s) => s && s.rank === 'Cosmic Scholar' },
-    { id: 'streak_3',          label: '3-Day Return',        condition: d => d.streakDays >= 3 },
-    { id: 'streak_7',          label: '7-Day Return',        condition: d => d.streakDays >= 7 },
-    { id: 'hour_spent',        label: 'An Hour in Orbit',    condition: d => d.totalMinutes >= 60 },
+  // ── Today's study minutes (live read) ───────────────────────
+
+  function getTodayMins() {
+    const data  = load();
+    const today = new Date().toDateString();
+    if (data.lastStudyDate !== today) return 0;
+    return data.todayStudyMins || 0;
+  }
+
+  // ── Achievements ─────────────────────────────────────────────
+
+  const ALL_ACHIEVEMENTS = [
+    { id: 'first_orbit',     label: 'First Orbit',       icon: '◌', condition: d => d.orbitSessions >= 1 },
+    { id: 'five_orbits',     label: 'Five Orbits',        icon: '○', condition: d => d.orbitSessions >= 5 },
+    { id: 'ten_orbits',      label: 'Ten Orbits',         icon: '◎', condition: d => d.orbitSessions >= 10 },
+    { id: 'first_study',     label: 'First Session',      icon: '✦', condition: d => d.studySessions >= 1 },
+    { id: 'five_study',      label: 'Five Sessions',      icon: '✦', condition: d => d.studySessions >= 5 },
+    { id: 'hour_studied',    label: 'One Hour Studied',   icon: '◈', condition: d => d.totalStudyMins >= 60 },
+    { id: 'five_hours',      label: 'Five Hours Studied', icon: '◈', condition: d => d.totalStudyMins >= 300 },
+    { id: 'hundred_frags',   label: '100 Fragments',      icon: '✧', condition: d => d.allTimeFragments >= 100 },
+    { id: 'orbital_master',  label: 'Orbital Master',     icon: '✦', condition: (d,s) => s && s.rank === 'Orbital Master' },
+    { id: 'cosmic_scholar',  label: 'Cosmic Scholar',     icon: '✧', condition: (d,s) => s && s.rank === 'Cosmic Scholar' },
+    { id: 'perfect_breath',  label: 'Perfect Breath',     icon: '◉', condition: (d,s) => s && s.breathSync >= 88 },
+    { id: 'streak_3',        label: '3-Day Streak',       icon: '⬡', condition: d => d.streakDays >= 3 },
+    { id: 'streak_7',        label: '7-Day Streak',       icon: '⬡', condition: d => d.streakDays >= 7 },
+    { id: 'streak_14',       label: '14-Day Streak',      icon: '⬡', condition: d => d.streakDays >= 14 },
+    { id: 'hour_in_orbit',   label: 'Hour in Orbit',      icon: '◌', condition: d => d.totalOrbitMins >= 60 },
+    { id: 'two_hours_study', label: '2h in One Day',      icon: '◈', condition: d => d.todayStudyMins >= 120 },
   ];
 
-  function checkAchievements(sessionData) {
-    const data   = load();
-    const earned = [];
+  function getAllAchievements() { return ALL_ACHIEVEMENTS; }
 
-    for (const ach of ACHIEVEMENTS) {
+  function checkAchievements(sessionData) {
+    const data  = load();
+    const earned = [];
+    for (const ach of ALL_ACHIEVEMENTS) {
       if (data.achievements.includes(ach.id)) continue;
       if (ach.condition(data, sessionData)) {
         data.achievements.push(ach.id);
         earned.push(ach.label);
       }
     }
-
     if (earned.length) save(data);
     return earned;
   }
 
-  return { get, recordSession, checkAchievements };
+  return {
+    get, save: (d) => save(d),
+    recordStudy, recordOrbit, getTodayMins,
+    getAllAchievements, checkAchievements,
+  };
 })();
