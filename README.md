@@ -20,7 +20,7 @@ Orbit is not a game to get lost in. It exists only to **prepare you for the next
 
 ## How to Play
 
-1. Open `index.html` in a browser (or visit the GitHub Pages URL)
+1. Visit the GitHub Pages URL
 2. Click **Begin Orbit**
 3. Follow the breathing guide (optional but recommended)
 4. Hold mouse/finger → orbit expands | Release → orbit contracts
@@ -50,45 +50,6 @@ orbit/
 
 ---
 
-## Deploying to GitHub Pages
-
-1. Create a new GitHub repository (e.g. `orbit`)
-2. Add all files maintaining the folder structure above
-3. Go to **Settings → Pages**
-4. Set source to **main branch / root**
-5. Your game is live at `https://yourusername.github.io/orbit`
-
----
-
-## Harmony Ranks
-
-| Rank | Harmony Required |
-|------|-----------------|
-| Drifting Wanderer | 0+ |
-| Gentle Explorer | 30+ |
-| Focused Navigator | 80+ |
-| Orbital Master | 150+ |
-| Cosmic Scholar | 250+ |
-
----
-
-## Achievements
-
-| Achievement | How to Earn |
-|-------------|-------------|
-| First Orbit | Complete 1 session |
-| Five Orbits | Complete 5 sessions |
-| Ten Orbits | Complete 10 sessions |
-| 25 Sessions | Complete 25 sessions |
-| 100 Fragments | Collect 100 total fragments |
-| Perfect Breath | Achieve 90%+ breath sync |
-| Orbital Master | Reach Orbital Master rank |
-| Cosmic Scholar | Reach Cosmic Scholar rank |
-| 3-Day Return | Return 3 days in a row |
-| 7-Day Return | Return 7 days in a row |
-| An Hour in Orbit | Spend 60+ total minutes |
-
----
 
 ## Tech Stack
 
@@ -99,15 +60,6 @@ orbit/
 - **localStorage** — session history, achievements, streaks
 
 Works offline. No build step. No npm. Just open and play.
-
----
-
-## Roadmap
-
-- **v2** — Themes (Ocean / Forest / Aurora)
-- **v3** — Real Pomodoro integration (25-min session timer)
-- **v4** — Multiplayer class-break mode
-- **v5** — Community reflection library
 
 ---
 
